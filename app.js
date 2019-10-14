@@ -8,7 +8,7 @@ var budgetController = (function() {
 
 	Expense.prototype.calcPercentage = function(totalIncome) {
 		if (totalIncome > 0) {
-			this.percentage = Math.round(this.value / totalIncome / 100);
+			this.percentage = Math.round((this.value / totalIncome) * 100);
 		} else {
 			this.percentage = -1;
 		}
@@ -113,10 +113,6 @@ var budgetController = (function() {
 				totalExp: data.totals.exp,
 				percentage: data.percentage
 			};
-		},
-
-		testing: function() {
-			console.log(data);
 		}
 	};
 })();
@@ -134,7 +130,34 @@ var UIController = (function() {
 		expensesLabel: '.budget__expenses--value',
 		percentageLabel: '.budget__expenses--percentage',
 		container: '.container',
-		expensesPercLabel: 'item_percentage'
+		expensesPercLabel: '.item__percentage',
+		dateLabel: '.budget__title--month'
+	};
+
+	var formatNumber = function(num, type) {
+		var numSplit, int, dec, type;
+		/*
+				+ or - before number
+				exactly 2 decimal points
+				comma separating the thousands
+
+				2310.4567 -> + 2,310.46
+				2000 -> + 2,000.00
+				*/
+
+		num = Math.abs(num);
+		num = num.toFixed(2);
+
+		numSplit = num.split('.');
+
+		int = numSplit[0];
+		if (int.length > 3) {
+			int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3); //input 23510, output 23,510
+		}
+
+		dec = numSplit[1];
+
+		return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
 	};
 
 	return {
@@ -162,7 +185,7 @@ var UIController = (function() {
 			//Replace placeholder text with data
 			newHtml = html.replace('%id%', obj.id);
 			newHtml = newHtml.replace('%description%', obj.description);
-			newHtml = newHtml.replace('%value%', obj.value);
+			newHtml = newHtml.replace('%value%', formatNumber(obj.value));
 
 			// Insert html into the data
 			document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
@@ -201,9 +224,8 @@ var UIController = (function() {
 
 		displayPercentages: function(percentages) {
 			var fields = document.querySelectorAll(DOMstrings.expensesPercLabel);
-
 			var nodeListForEach = function(list, callback) {
-				for (let i = 0; i < list.length; i++) {
+				for (var i = 0; i < list.length; i++) {
 					callback(list[i], i);
 				}
 			};
@@ -245,11 +267,13 @@ var controller = (function(budgetCtrl, UICtrl) {
 	};
 
 	var updatePercentages = function() {
-		// Calculate percentages
-		budgetCtrl.updatePercentages();
-		// Read them from budget ctroller
+		// 1. Calculate percentages
+		budgetCtrl.calculatePercentages();
+
+		// 2. Read percentages from the budget controller
 		var percentages = budgetCtrl.getPercentages();
-		// Update UI
+
+		// 3. Update the UI with the new percentages
 		UICtrl.displayPercentages(percentages);
 	};
 
