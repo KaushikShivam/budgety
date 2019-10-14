@@ -211,7 +211,9 @@ var UIController = (function() {
 		},
 
 		displayBudget: function(obj) {
-			document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
+			var type;
+			obj.budget > 0 ? (type = 'inc') : (type = 'exp');
+			document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
 			document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
 			document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
 
